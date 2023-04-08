@@ -21,3 +21,4 @@ export type spring = {
 export type springIniter = {
 	New: (Mass:number,Damping:number,Constant:number,InitialOffset:number,InitialVelocity:number,ExternalForce:number)->spring
 }
+return {}
