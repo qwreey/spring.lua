@@ -6,7 +6,7 @@ spring module for lua env. working at everywhere such as roblox, luvit etc
 # build in rojo
 
 ```sh
-rojo build default.project.json --out BuildResult.rbxmx
+rojo build default.project.json -o BuildResult.rbxmx
 ```
 
 # use rojo submodule
