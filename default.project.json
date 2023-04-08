@@ -1,0 +1,12 @@
+{
+    "name": "spring.lua",
+    "tree": {
+        "$path": "export.lua",
+        "spring": {
+            "$path": "main.lua"
+        },
+        "types": {
+            "$path": "types.lua"
+        }
+    }
+}
