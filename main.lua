@@ -115,6 +115,7 @@ function spring:InitResolver()
 		self.c1,self.c2 = InitialOffset, (InitialVelocity - (r * InitialOffset)) / s
 		self.r,self.s = r,s
 	end
+	return self
 end
 
 function spring:GetOffset(dt)
