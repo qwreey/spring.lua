@@ -1,5 +1,5 @@
 {
-    "name": "spring.lua",
+    "name": "spring",
     "tree": {
         "$path": "export.lua",
         "spring": {
