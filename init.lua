@@ -37,72 +37,6 @@ end
 
 -- init resolver
 local d = -1 / 2
-function spring:InitResolverOld()
-	local InitialOffset, InitialVelocity, ExternalForce = self.InitialOffset, self.InitialVelocity, self.ExternalForce
-	local Mass, Damping, Constant = self.Mass, self.Damping, self.Constant
-	local delta = ((Damping * Damping) / (Mass * Mass)) - (4 * Constant / Mass)
-	local StartTick = clock()
-	self.StartTick = StartTick
-
-	if delta > 0 then
-		local w1 = Damping/Mass + sqrt(delta)
-		local w2 = Damping/Mass - sqrt(delta)
-		local r1, r2 = d * w1, d * w2
-		local c1, c2 = ((r2 * InitialOffset) - InitialVelocity) / (r2 - r1), ((r1 * InitialOffset) - InitialVelocity) / (r1 - r2)
-		local yp = ExternalForce / Constant
-
-		self.GetOffset = function()
-			local dt = clock() - StartTick
-			return c1 * exp(r1 * dt) + c2 * exp(r2 * dt) + yp
-		end
-		self.GetVelocity = function()
-			local dt = clock() - StartTick
-			return c1 * r1 * exp(r1 * dt) + c2 * r2 * exp(r2 * dt)
-		end
-		self.GetAcceleration = function()
-			local dt = clock() - StartTick
-			return c1 * r1 * r1 * exp(r1 * dt) + c2 * r2 * r2 * exp(r2 * dt)
-		end
-	elseif delta == 0 then
-		local r = -Damping / (2 * Mass)
-		local c1, c2 = InitialOffset, InitialVelocity - r * InitialOffset
-		local yp = ExternalForce / Constant
-
-		self.GetOffset = function()
-			local dt = clock() - StartTick
-			return exp(r * dt) * (c1 + c2 * dt) + yp
-		end
-		self.GetVelocity = function()
-			local dt = clock() - StartTick
-			return exp(r * dt) * (c2 * r * dt + c1 * r + c2)
-		end
-		self.GetAcceleration = function()
-			local dt = clock() - StartTick
-			return r * exp(r * dt) * (c2 * r * dt + c1 * r + 2 * c2)
-		end
-	else
-		local r = -Damping / (2 * Mass)
-		local s = sqrt(-delta)
-		local c1, c2 = InitialOffset, (InitialVelocity - (r * InitialOffset)) / s
-		local yp = ExternalForce / Constant
-
-		self.GetOffset = function()
-			local dt = clock() - StartTick
-			return exp(r * dt) * (c1 * cos(s * dt) + c2 * sin(s * dt)) + yp
-		end
-		self.GetVelocity = function()
-			local dt = clock() - StartTick
-			return -exp(r * dt) * ((c1 * s - c2 * r) * sin(s * dt) + (-c2 * s - c1 * r) * cos(s * dt))
-		end
-		self.GetAcceleration = function()
-			local dt = clock() - StartTick
-			return -exp(r * dt) * ((c2 * s * s + 2 * c1 * r * s - c2 * r * r) * sin(s * dt) + (c1 * s * s - 2 * c2 * r * s - c1 * r * r) * cos(s * dt))
-		end
-	end
-
-	return self
-end
-
 function spring:InitResolver()
 	local InitialOffset, InitialVelocity, ExternalForce = self.InitialOffset, self.InitialVelocity, self.ExternalForce
 	local Mass, Damping, Constant = self.Mass, self.Damping, self.Constant
@@ -236,9 +170,9 @@ function spring:AddVelocity(velocity)
 	self:InitResolver()
 end
 
------------------------
--- Force&Acceleration
------------------------
+---------------------------
+-- Force&Acceleration&ETC
+---------------------------
 
 function spring:GetAcceleration(dt)
 	dt = dt or (clock() - self.StartTick)
@@ -265,6 +199,12 @@ function spring:SetExternalForce(force)
 
 	-- reset spring
 	self:InitResolver()
+end
+
+function spring:ResetTo(offset)
+	self.ExternalForce = 0
+	self.InitialOffset = offset
+	self.InitialVelocity = 0
 end
 
 return spring
