@@ -10,6 +10,18 @@ local cos = math.cos
 local sin = math.sin
 local clock = os.clock
 
+local hrtime do
+	local ok,uv = pcall(require,"uv")
+	if ok then
+		hrtime = uv.hrtime
+	end
+end
+if hrtime then
+	clock = function ()
+		return hrtime()/1e9
+	end
+end
+
 function spring.New(Mass,Damping,Constant,InitialOffset,InitialVelocity,ExternalForce)
 	local this = {
 		Mass = Mass;
@@ -118,6 +130,43 @@ function spring:InitResolver()
 	return self
 end
 
+-------------
+--   GOAL
+-------------
+
+-- get goal from external force and constant
+function spring:GetGoal()
+	return self.ExternalForce/self.Constant
+end
+
+-- sets the external force of the spring object such that
+-- the spring object eventually reaches this number
+function spring:SetGoal(goal)
+	-- set properties
+	self.ExternalForce = goal * self.Constant
+	self.InitialOffset = self:GetOffset() - goal
+	self.InitialVelocity = self:GetVelocity()
+
+	-- reset spring
+	self:InitResolver()
+end
+
+function spring:AddGoal(goal)
+	goal = self:GetGoal() + goal
+
+	-- set properties
+	self.ExternalForce = goal * self.Constant
+	self.InitialOffset = self:GetOffset() - goal
+	self.InitialVelocity = self:GetVelocity()
+
+	-- reset spring
+	self:InitResolver()
+end
+
+-------------
+--  Offset
+-------------
+
 function spring:GetOffset(dt)
 	dt = dt or (clock() - self.StartTick)
 	local delta = self.Delta
@@ -130,6 +179,29 @@ function spring:GetOffset(dt)
 		return exp(self.r * dt) * (self.c1 * cos(self.s * dt) + self.c2 * sin(self.s * dt)) + self.yp
 	end
 end
+
+-- set offset instant and reset force
+function spring:SetOffset(offset)
+
+	local goal = self:GetGoal()
+
+	self.ExternalForce = goal * self.Constant
+	self.InitialOffset = offset - goal
+	self.InitialVelocity = self:GetVelocity()
+	self:InitResolver()
+end
+
+-- adds the given offset to the spring object
+function spring:AddOffset(offset)
+	-- set properties and restart spring
+	self.InitialOffset = self:GetOffset() + offset
+	self.InitialVelocity = self:GetVelocity()
+	self:InitResolver()
+end
+
+-------------
+-- Velocity
+-------------
 
 function spring:GetVelocity(dt)
 	dt = dt or (clock() - self.StartTick)
@@ -146,6 +218,27 @@ function spring:GetVelocity(dt)
 		return -exp(r * dt) * ((c1 * s - c2 * r) * sin(s * dt) + (-c2 * s - c1 * r) * cos(s * dt))
 	end
 end
+
+-- set the given velocity to the spring object
+function spring:SetVelocity(velocity)
+	self.InitialOffset = self:GetOffset()
+	self.InitialVelocity = velocity
+
+	-- reset spring
+	self:InitResolver()
+end
+
+-- adds the given velocity to the spring object
+function spring:AddVelocity(velocity)
+	-- set properties and restart spring
+	self.InitialOffset = self:GetOffset()
+	self.InitialVelocity = self:GetVelocity() + velocity
+	self:InitResolver()
+end
+
+-----------------------
+-- Force&Acceleration
+-----------------------
 
 function spring:GetAcceleration(dt)
 	dt = dt or (clock() - self.StartTick)
@@ -167,55 +260,10 @@ end
 function spring:SetExternalForce(force)
 	-- set properties
 	self.ExternalForce = force
-	self.InitialOffset =  self:GetOffset() - force / self.Constant
-	self.InitialVelocity =  self:GetVelocity()
-
-	-- reset spring
-	self:InitResolver()
-end
-
--- sets the external force of the spring object such that
--- the spring object eventually reaches this number
-function spring:SetGoal(goal)
-	-- set properties
-	self.ExternalForce = goal * self.Constant
-	self.InitialOffset = self:GetOffset() - goal
+	self.InitialOffset = self:GetOffset() - force / self.Constant
 	self.InitialVelocity = self:GetVelocity()
 
 	-- reset spring
-	self:InitResolver()
-end
-
--- set offset instant and reset force
-function spring:SetOffset(offset)
-
-	-- set properties and restart spring
-	self.InitialOffset = offset
-	self.InitialVelocity = 0
-	self.ExternalForce = 0
-	self:InitResolver()
-
-	self:SetGoal(self:GetOffset())
-end
-
--- get goal from external force and constant
-function spring:GetGoal()
-	return self.ExternalForce/self.Constant
-end
-
--- adds the given offset to the spring object
-function spring:AddOffset(offset)
-	-- set properties and restart spring
-	self.InitialOffset = self:GetOffset() + offset
-	self.InitialVelocity = self:GetVelocity()
-	self:InitResolver()
-end
-
--- adds the given velocity to the spring object
-function spring:AddVelocity(velocity)
-	-- set properties and restart spring
-	self.InitialOffset = self:GetOffset()
-	self.InitialVelocity = self:GetVelocity() + velocity
 	self:InitResolver()
 end
 
