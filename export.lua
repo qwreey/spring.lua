@@ -22,4 +22,4 @@ export type springIniter = {
 	New: (Mass:number,Damping:number,Constant:number,InitialOffset:number,InitialVelocity:number,ExternalForce:number)->spring
 }
 
-return require(script.spring) :: springIniter
+return require(script.main) :: springIniter
