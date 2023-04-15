@@ -154,6 +154,7 @@ function spring:GetVelocity(dt)
 end
 
 -- set the given velocity to the spring object
+--! NEED TO CHECK THIS IS WORKING FINE
 function spring:SetVelocity(velocity)
 	self.InitialOffset = self:GetOffset()
 	self.InitialVelocity = velocity
